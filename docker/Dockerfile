@@ -26,8 +26,7 @@ RUN apk add --no-cache \
     curl \
     python \
     py-pip \
-    nodejs \
-    nodejs-npm
+    libssl1.1
 
 ## python3.6 and modules install
 ENV PYTHON_VERSION=3.6.2 \
@@ -52,13 +51,13 @@ WORKDIR /usr/local/src
 
 RUN git clone https://github.com/JPCERTCC/LogonTracer.git \
     && cd LogonTracer \
+    && pip3.6 install --upgrade pip \
+    && pip3.6 install --upgrade setuptools \
     && pip3.6 install numpy \
     && pip3.6 install -r requirements.txt \
     && unlink /var/lib/neo4j/data \
     && mkdir -p /var/lib/neo4j/data/databases \
     && tar xzf sample/graph.db.tar.gz -C /var/lib/neo4j/data/databases \
-    && cd static \
-    && npm install neo4j-driver \
     && echo "dbms.allow_format_migration=true" >> /var/lib/neo4j/conf/neo4j.conf
 
 ## Create supervisord.conf
@@ -74,11 +73,12 @@ RUN touch /etc/supervisord.conf \
 
 ## Create setup file
 RUN echo "#!/bin/bash" > setup.sh \
-    && echo "sleep 30" >> setup.sh \
+    && echo "sleep 40" >> setup.sh \
     && echo "curl -H \"Content-Type: application/json\" -X POST -d '{\"password\":\"password\"}' -u neo4j:neo4j http://localhost:7474/user/neo4j/password" >> setup.sh \
     && echo "rm -f /usr/local/src/setup.sh" >> setup.sh \
     && chmod 755 setup.sh
 RUN echo "#!/bin/bash" > run.sh \
+    && echo "sleep 40" >> run.sh \
     && echo "cd /usr/local/src/LogonTracer" >> run.sh \
     && echo "python3 logontracer.py -r -o 8080 -u neo4j -p password -s \${LTHOSTNAME}" >> run.sh \
     && chmod 755 run.sh
